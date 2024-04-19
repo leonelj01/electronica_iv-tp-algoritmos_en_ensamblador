@@ -39,7 +39,7 @@
 defun suma
     push {r4-r11,lr}
     // Insertar código a continuación
-
+    ADD     R0, R0, R1
     // Retorno, antes R0 debe tener el valor correcto
     pop {r4-r11,pc}
 endfun suma
@@ -61,6 +61,22 @@ defun sumatoria
     push {r4-r11,lr}
     // Insertar código a continuación
 
+    // Inicializo los registros R2 y R3
+    MOV     R2 #0
+    MOV     R3 #0
+
+    LOOP: 
+        LDR     R4, R[1], #4 // carga el numero actual en R4
+
+        ADD     R2, R2, R4
+        ADC     R3, R3, #0
+
+        SUB     R0, R0, #1
+
+        BNE     LOOP
+    
+    MOV     R0, R2
+    MOV     R1, R3
     // Retorno, antes R1:R0 debe tener el valor correcto
     pop {r4-r11,pc}
 endfun sumatoria
@@ -82,6 +98,25 @@ defun posicion_maximo
     push {r4-r11,lr}
     // Insertar código a continuación
 
+    // Inicializa R2 como el maximo actual y R3 como la posicion del maximo
+    LDR     R2, [R1]    // carga el primer numero 
+    MOV     R3, R1      // Guarda la poscicion del primer numero
+
+    LOOP:
+        LDR     R4, [R1], #4    // Carga el numero actual
+
+        CMP     R2, R4  // Compara R4 con el maximo actual (R2)
+
+        //Si R4 es mayor que R2, actualiza el maximo y su posicion
+        IT      GT
+        MOVGT   R2, R4
+        MOVGT   R3, R1
+
+        //Resto R0 y repite si aun hay numeros
+        SUBS    R0, R0, #1
+        BNE     LOOP
+    
+    MOV     R0, R3
     // Retorno, antes R0 debe tener el valor correcto
     pop {r4-r11,pc}
 endfun posicion_maximo
@@ -106,7 +141,27 @@ endfun posicion_maximo
 defun ordenar_en_sitio_menor_a_mayor
     push {r4-r11,lr}
     // Insertar código a continuación
+    MOV     R2, #0
 
+    outer_loop:
+        MOV     R3, R2
+
+    inner_loop:
+        LDR     R4, [R1, R3, LSL #2]
+        ADD     R3, R3, #1
+        LDR     R5, [R1, R3, LSL #2]
+
+        CMP     R4, R5
+        IT      GT
+        STRGT   R4, [R1, R3, LSL #2]
+        STRGT   R5, [R1, R3, LSL #2, #-4]
+
+        CMP     R3, RO
+        BLT     inner_loop
+
+        ADD     R2, R2, #1
+        CMP     R2, R0
+        BLT     outer_loop
     // Retorno
     pop {r4-r11,pc}
 endfun ordenar_en_sitio_menor_a_mayor
