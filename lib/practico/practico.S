@@ -2,13 +2,13 @@
 /* En este archivo escribirás tu solución.
  * Para ello deberás completar las rutinas en código
  * ensamblador.
- * Puedes usar los registros R0 a R12 pues ya está preservado
+ * Puedes usar los registros r0 a r12 pues ya está preservado
  * el valor de los registros que deben mantenerse.
- * Los registros R0 a R3 contienen los argumentos al entrar a
+ * Los registros r0 a r3 contienen los argumentos al entrar a
  * la rutina y contendrán el valor devuelto al salir.
- * Si realizas un llamado a subrutina, los registros R0 a R3 y el
- * registro R12 pueden cambiar su valor (y en particular, R0 contiene 
- * normalmente el valor devuelto), los registros R4 a R11 preservan
+ * Si realizas un llamado a subrutina, los registros r0 a r3 y el
+ * registro r12 pueden cambiar su valor (y en particular, r0 contiene 
+ * normalmente el valor devuelto), los registros r4 a r11 preservan
  * su valor.
  */
 .syntax unified
@@ -32,15 +32,15 @@
  * Sumar dos enteros de 32 bit
  *  suma(2,3) => 5
  * Entrada
- *  a->R0, b->R1 : sumandos, enteros de 32 bit con signo 
+ *  a->r0, b->r1 : sumandos, enteros de 32 bit con signo 
  * Salida
- *  R0     : suma, entero de 32 bit con signo
+ *  r0     : suma, entero de 32 bit con signo
  */
 defun suma
     push {r4-r11,lr}
     // Insertar código a continuación
-    ADD     R0, R0, R1
-    // Retorno, antes R0 debe tener el valor correcto
+    add r0, r1
+    // retorno, antes r0 debe tener el valor correcto
     pop {r4-r11,pc}
 endfun suma
 
@@ -51,33 +51,32 @@ endfun suma
  * sumatoria(5,(uint32_t[]){1,2,3,4,5}) => 15
  *
  * Entrada 
- *  n->R0    : Cantidad de números en registro R0, entero de 32 bit
- *  b->R1    : Dirección en memoria del primer número, puntero a
+ *  n->r0    : Cantidad de números en registro r0, entero de 32 bit
+ *  b->r1    : Dirección en memoria del primer número, puntero a
  *             entero de 32 bit con signo.
  * Salida
- *  R1:R0 : Sumatoria, entero de 64 bit con signo 
+ *  r1:r0 : Sumatoria, entero de 64 bit con signo 
  */
 defun sumatoria
     push {r4-r11,lr}
     // Insertar código a continuación
+    mov r2, #0                  // Inicializa el índice actual a 0
+    mov r3, #0                  // Inicializa la parte baja del acumulador a 0
+    mov r4, #0                  // Inicializa la parte alta del acumulador a 0
 
-    // Inicializo los registros R2 y R3
-    MOV     R2 #0
-    MOV     R3 #0
+bucle_1:
+    ldr r5, [r1, r2, lsl #2]    // Carga el elemento actual del arreglo en r5
+    add r3, r5                 // Suma el elemento actual a la parte baja del acumulador
+    adc r4, #0                  // Suma el acarreo a la parte alta del acumulador
 
-    LOOP: 
-        LDR     R4, R[1], #4 // carga el numero actual en R4
+    add r2, #1                  // Incrementa el índice actual
+    cmp r2, r0                  // Compara el índice actual con el tamaño del arreglo
+    blt bucle_1                   // Si el índice actual es menor que el tamaño del arreglo, continúa el bucle
 
-        ADD     R2, R2, R4
-        ADC     R3, R3, #0
-
-        SUB     R0, R0, #1
-
-        BNE     LOOP
-    
-    MOV     R0, R2
-    MOV     R1, R3
-    // Retorno, antes R1:R0 debe tener el valor correcto
+fin_1:
+    mov r0, r3                  // Devuelve la parte baja del resultado en r0
+    mov r1, r4                  // Devuelve la parte alta del resultado en r1
+    // retorno, antes r1:r0 debe tener el valor correcto
     pop {r4-r11,pc}
 endfun sumatoria
 
@@ -87,37 +86,38 @@ endfun sumatoria
  * posicion_maximo(4,(uint32_t[]){1,4,2,3}) => 1
  *
  * Entrada:
- *  n->R0 : cantidad de números en el arreglo, entero de 32 bit
- *  b->R1 : posición en memoria del primer número, puntero
+ *  n->r0 : cantidad de números en el arreglo, entero de 32 bit
+ *  b->r1 : posición en memoria del primer número, puntero
  *          a entero de 32 bit con signo.
  * Salida:
- *  R0 : posición del máximo elemento en el arreglo, entero
+ *  r0 : posición del máximo elemento en el arreglo, entero
  *       de 32 bit.
  */
 defun posicion_maximo
     push {r4-r11,lr}
     // Insertar código a continuación
+    mov r2, #0                  //Inicializa el índice del máximo a 0
+    ldr r3, [r1]                //Carga el primer elemento del arreglo en r3
+    mov r4, #1                  //Inicializa el índice actual a 1
 
-    // Inicializa R2 como el maximo actual y R3 como la posicion del maximo
-    LDR     R2, [R1]    // carga el primer numero 
-    MOV     R3, R1      // Guarda la poscicion del primer numero
+bucle_2:
+    ldr r5, [r1, r4, lsl #2]    //Carga el elemento actual del arreglo en r5
+    cmp r3, r5                  //Compara el máximo actual con el elemento actual
+    blt actualizar              //Si el máximo actual es menor que el elemento actual, actualiza el máximo
+    b fin_actualizar            //Si no, termina la actualización
 
-    LOOP:
-        LDR     R4, [R1], #4    // Carga el numero actual
+actualizar:
+    mov r3, r5                  //Actualiza el máximo actual
+    mov r2, r4                  //Actualiza el índice del máximo
 
-        CMP     R2, R4  // Compara R4 con el maximo actual (R2)
+fin_actualizar:
+    add r4, #1                  //Incrementa el índice actual
+    cmp r4, r0                  //Compara el índice actual con el tamaño del arreglo
+    blt bucle_2                 //Si el índice actual es menor que el tamaño del arreglo, continúa el bucle
 
-        //Si R4 es mayor que R2, actualiza el maximo y su posicion
-        IT      GT
-        MOVGT   R2, R4
-        MOVGT   R3, R1
-
-        //Resto R0 y repite si aun hay numeros
-        SUBS    R0, R0, #1
-        BNE     LOOP
-    
-    MOV     R0, R3
-    // Retorno, antes R0 debe tener el valor correcto
+fin:
+    mov r0, r2                  //Devuelve la posición del máximo en r0
+    // retorno, antes r0 debe tener el valor correcto
     pop {r4-r11,pc}
 endfun posicion_maximo
 
@@ -126,13 +126,13 @@ endfun posicion_maximo
  * La ordenación es en el lugar, sobreescribiendo el arreglo
  * original.
  *
- * uint32_t vals[]={4,1,3,5,2,6,7};
+ * uint32_t vals[]={4,1,3,5,2,6,7}//
  * ordenar_en_sitio_menor_a_mayor(7,vals)
  * luego vals contendrá {1,2,3,4,5,6,7}
  *
  * Entrada:
- *  n->R0 : Cantidad de números en el arreglo, entero de 32 bit
- *  b->R1 : Dirección del primer número, puntero a entero de
+ *  n->r0 : Cantidad de números en el arreglo, entero de 32 bit
+ *  b->r1 : Dirección del primer número, puntero a entero de
  *          32 bit con signo.
  * Salida:
  *  Sin valor de salida. El arreglo dado debe haber sido ordenado
@@ -141,27 +141,28 @@ endfun posicion_maximo
 defun ordenar_en_sitio_menor_a_mayor
     push {r4-r11,lr}
     // Insertar código a continuación
-    MOV     R2, #0
+    mov r2, #0                              // Inicializar el índice i a 0
 
-    outer_loop:
-        MOV     R3, R2
+bucle_externo:
+    mov r3, #0                              // Inicializar el índice j a 0
 
-    inner_loop:
-        LDR     R4, [R1, R3, LSL #2]
-        ADD     R3, R3, #1
-        LDR     R5, [R1, R3, LSL #2]
+bucle_interno:
+    ldr     r4, [r1, r3]                    // Cargar el elemento j del arreglo en r4
+    ldr     r5, [r1, r3, lsl #2]            // Cargar el elemento j+1 del arreglo en r5
+    add     r5, #1
+    cmp     r4, r5                          // Comparar los elementos j y j+1
+    blt     siguiente                       // Si el elemento j es menor, saltar al siguiente elemento
+    str     r5, [r1, r3]                    // Si el elemento j es mayor, intercambiar los elementos
+    str     r4, [r1, r3, lsl #2]
 
-        CMP     R4, R5
-        IT      GT
-        STRGT   R4, [R1, R3, LSL #2]
-        STRGT   R5, [R1, R3, LSL #2, #-4]
+siguiente:
+    add     r3, #1                          // Incrementar el índice j
+    cmp     r3, r0                          // Comparar el índice j con el tamaño del arreglo
+    blt     bucle_interno                   // Si el índice j es menor, volver al inicio del bucle interno
 
-        CMP     R3, RO
-        BLT     inner_loop
+    add     r2, #1                          // Incrementar el índice i
+    cmp     r2, r0                          // Comparar el índice i con el tamaño del arreglo
+    blt     bucle_externo                   // Si el índice i es menor, volver al inicio del bucle externo
 
-        ADD     R2, R2, #1
-        CMP     R2, R0
-        BLT     outer_loop
-    // Retorno
     pop {r4-r11,pc}
 endfun ordenar_en_sitio_menor_a_mayor
